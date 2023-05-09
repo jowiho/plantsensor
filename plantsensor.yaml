@@ -42,7 +42,10 @@ switch:
 
 deep_sleep:
   run_duration: 5s
-  sleep_duration: 1min
+  sleep_duration: 240min
+  wakeup_pin:
+    number: 35
+    inverted: true
 
 i2c:
   sda: 25
