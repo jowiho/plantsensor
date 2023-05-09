@@ -1,4 +1,4 @@
-# My scratch pad for experiments with the TTGO HiGrow ==
+# My scratch pad for experiments with the TTGO HiGrow
 
 ## Useful links
 * Vendor firmware: https://github.com/Xinyuan-LilyGO/LilyGo-HiGrow/
