@@ -1,3 +1,13 @@
+###############################################################################
+#
+# ESPHome configuration for the LilyGO TTGO T-Higrow ESP32 plant sensor.
+#
+# Note: some T-Higrow models have a DHT11 temperature and humidity sensor,
+# while others have a BME280 barometer pressure and humidity sensor. This
+# config is for the BME280 model.
+#
+###############################################################################
+
 esphome:
   name: plantsensor
   platform: ESP32
