@@ -13,6 +13,8 @@ To reduce energy consumption when running off of a battery, the config enables d
 After every cycle it wakes up and takes 1 or 2 measurements for each sensor.
 Press the Wake button on the side of the device to interrupt the sleep cycle and take an immediate measurement.
 
+Note: you should temporarily disable deep sleep before trying to add the ESPHome device to your Home Assistant.
+
 ## Notes
 * Temperature sensor always seems to return a too high value. Possibly picking up heat from the board?
 * BME280 altitude is useless for a static plant sensor
