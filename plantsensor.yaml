@@ -20,12 +20,14 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-# Enable Home Assistant API
-api:
-  password: "password"
-
+# Enable over-the-air firmware updates
 ota:
   password: "password"
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_key
 
 # Pull pin 4 high to enable sensor power
 switch:
