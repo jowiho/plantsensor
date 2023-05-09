@@ -40,6 +40,10 @@ switch:
     # Enable spower before i2c
     setup_priority: 1100
 
+deep_sleep:
+  run_duration: 5s
+  sleep_duration: 1min
+
 i2c:
   sda: 25
   scl: 26
@@ -55,21 +59,21 @@ sensor:
     humidity:
       name: "Humidity"
     address: 0x77
-    update_interval: 60s
+    update_interval: 3s
     # Enable after i2c
     setup_priority: 100
 
   - platform: bh1750
     name: "Illuminance"
     address: 0x23
-    update_interval: 60s
+    update_interval: 3s
     # Enable after i2c
     setup_priority: 100
 
   - platform: adc
     pin: GPIO32
     name: "Soil"
-    update_interval: 60s
+    update_interval: 3s
     unit_of_measurement: '%'
     accuracy_decimals: 1
     #raw: true
@@ -85,6 +89,9 @@ sensor:
     # Water:          1.37V @ 6db    1.39V @ 11db
     # *Out of range
 
+
+  # Disabled the salt sensor because its reading are pretty much useless
+  #
   # - platform: adc
   #   pin: GPIO34
   #   name: "Salt"
