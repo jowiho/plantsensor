@@ -6,7 +6,7 @@
 
 ## ESPHome integration
 
-[`plantsensor.yaml`]()https://github.com/jowiho/plantsensor/blob/main/plantsensor.yaml)
+[`plantsensor.yaml`](https://github.com/jowiho/plantsensor/blob/main/plantsensor.yaml)
 is a [ESPHome](https://esphome.io/) configuration file that contains all sensors.
 
 To reduce energy consumption when running off of a battery, the config enables deep sleep cycles of 4 hours.
