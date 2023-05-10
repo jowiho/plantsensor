@@ -16,7 +16,8 @@ Press the Wake button on the side of the device to interrupt the sleep cycle and
 Note: you should temporarily disable deep sleep before trying to add the ESPHome device to your Home Assistant.
 
 ## Notes
-* Power consumption during deep sleep is 40 mW (8 mA over 5 V USB); too much for a small 200 mAh battery. A bare ESP32 supposedly uses just 10 uA in deep sleep ([source](https://lastminuteengineers.com/esp32-sleep-modes-power-consumption/#esp32-deep-sleep)). TODO: check consumption when using battery or 3.3V source
+* Power consumption in deep sleep is 103 uA when powered by a battery (4 V, 124 uW). In theory that should be enough to run 80 days on a 200 mAh LiPo cell, disregarding increased power consumption while awake.
+* Power consumption in deep sleep is 8 mA when powered over USB (5 V, 40 mW).
 * Temperature sensor always seems to return a too high value. Possibly picking up heat from the board?
 * BME280 altitude is useless for a static plant sensor
 * Salt sensor is pretty useless
