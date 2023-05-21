@@ -15,6 +15,12 @@ Press the Wake button on the side of the device to interrupt the sleep cycle and
 
 Note: you should temporarily disable deep sleep before trying to add the ESPHome device to your Home Assistant.
 
+## PlatformIO based firmware with MQTT support
+
+In [`PlatformIO`](https://github.com/jowiho/plantsensor/blob/main/PlatformIO) you'll find a simple
+PlatformIO based firmware, using the ESP IDF toolkit, that publishes measurements over MQTT
+It supports Home Assistant's MQTT autodiscovery, so it should be automatically appear in your Home Assistant if you've set up the MQTT integration.
+
 ## Notes
 * Power consumption in deep sleep is 103 uA when powered by a battery (4 V, 124 uW). In theory that should be enough to run 80 days on a 200 mAh LiPo cell, disregarding increased power consumption while awake.
 * Power consumption in deep sleep is 8 mA when powered over USB (5 V, 40 mW).
