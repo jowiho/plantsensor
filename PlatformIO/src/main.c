@@ -212,8 +212,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     }
 }
 
-esp_mqtt_client_handle_t client = NULL;
-static void mqtt_app_start(void)
+static esp_mqtt_client_handle_t mqtt_app_start(void)
 {
     ESP_LOGI(TAG, "Starting MQTT");
     esp_mqtt_client_config_t mqttConfig = {
@@ -223,9 +222,11 @@ static void mqtt_app_start(void)
         .password = MQTT_PASS
     };
 
-    client = esp_mqtt_client_init(&mqttConfig);
+    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqttConfig);
     ESP_ERROR_CHECK(esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, client));
     ESP_ERROR_CHECK(esp_mqtt_client_start(client));
+
+    return client;
 }
 
 void init_non_volatile_storage()
@@ -272,7 +273,7 @@ void app_main()
 
         init_non_volatile_storage();
         connect_to_wifi();
-        mqtt_app_start();
+        esp_mqtt_client_handle_t client = mqtt_app_start();
 
         xEventGroupWaitBits(event_group, MQTT_CONNECTED, pdFALSE, pdFALSE, portMAX_DELAY);
 
