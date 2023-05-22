@@ -2,12 +2,11 @@
  * PlatformIO based firmware for LilyGO TTGO T-Higrow ESP32 plant sensor.
  * Measures soil moisture and battery level, and published measurements
  * over MQTT.
- * 
+ *
  * Optimized for low power consumption, so you can run your plant sensor
  * for months on a small LiPo battery.
- * 
- * TODO: 
- * - go back to sleep when measurement hasn't changed
+ *
+ * TODO:
  * - average over 10 samples
  * - simpler event handling (https://esp32tutorials.com/esp32-mqtt-client-publish-subscribe-esp-idf/)
 */
@@ -131,7 +130,7 @@ void connect_to_wifi()
                                                         &got_ip));
 
     wifi_config_t wifi_config = {
-        .sta = { .ssid = WIFI_SSID, .password = WIFI_PASS } 
+        .sta = { .ssid = WIFI_SSID, .password = WIFI_PASS }
     };
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -184,29 +183,16 @@ static void mqtt_publish_discovery(esp_mqtt_client_handle_t client)
     }
 }
 
-struct history_t {
-    float battery;
-    float soil;
-};
-
-RTC_DATA_ATTR struct history_t history = { 0.0, 0.0 };
-
-static void mqtt_publish_measurements(esp_mqtt_client_handle_t client)
+static void mqtt_publish_measurements(esp_mqtt_client_handle_t client, float battery, float soil)
 {
     char buffer[32];
 
-    float soil = measure_soil_moisture();
-    ESP_LOGI(TAG, "Soil %.0f (delta = %.0f)", soil, soil - history.soil);
     snprintf(buffer, sizeof(buffer), "%.0f", soil);
-    history.soil = soil;
     if (esp_mqtt_client_publish(client, "plantsensor/sensor/soil/state", buffer, 0, 0, 0) == -1) {
         ESP_LOGE(TAG, "Failed to publish MQTT state");
     }
 
-    float battery = measure_battery_percentage();
-    ESP_LOGI(TAG, "Battery %.0f (delta = %.0f)", battery, battery - history.battery);
     snprintf(buffer, sizeof(buffer), "%.0f", battery);
-    history.battery = battery;
     if (esp_mqtt_client_publish(client, "plantsensor/sensor/battery/state", buffer, 0, 0, 0) == -1) {
         ESP_LOGE(TAG, "Failed to publish MQTT state");
     }
@@ -236,7 +222,7 @@ static void mqtt_app_start(void)
         .username = MQTT_USER,
         .password = MQTT_PASS
     };
-    
+
     client = esp_mqtt_client_init(&mqttConfig);
     ESP_ERROR_CHECK(esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, client));
     ESP_ERROR_CHECK(esp_mqtt_client_start(client));
@@ -254,28 +240,54 @@ void init_non_volatile_storage()
     ESP_ERROR_CHECK(ret);
 }
 
+struct measurements {
+    float battery;
+    float soil;
+};
+
+RTC_DATA_ATTR struct measurements last_published = { 0.0, 0.0 };
 RTC_DATA_ATTR uint32_t wakeup_count = 0;
 
 void app_main()
 {
     wakeup_count++;
+
     enable_sensors();
 
-    event_group = xEventGroupCreate();
+    // Measuring too quickly after enabling the sensors gives weird readings
+    vTaskDelay(500 / portTICK_PERIOD_MS);
 
-    init_non_volatile_storage();
-    connect_to_wifi();
-    mqtt_app_start();
+    const float battery = measure_battery_percentage();
+    const float soil = measure_soil_moisture();
 
-    xEventGroupWaitBits(event_group, MQTT_CONNECTED, pdFALSE, pdFALSE, portMAX_DELAY);
+    ESP_LOGI(TAG, "Battery: %.1f%% (change: %.1f%%)  Soil: %.1f%% (change: %.1f%%)",
+        battery,
+        battery - last_published.battery,
+        soil,
+        soil - last_published.soil);
 
-    if (wakeup_count == 1) {
-        mqtt_publish_discovery(client);
+    // Only publish measurements if they were different from previously published measurements
+    if (wakeup_count == 1 || abs(battery - last_published.battery) >= 1 || abs(soil - last_published.soil) >= 1) {
+        event_group = xEventGroupCreate();
+
+        init_non_volatile_storage();
+        connect_to_wifi();
+        mqtt_app_start();
+
+        xEventGroupWaitBits(event_group, MQTT_CONNECTED, pdFALSE, pdFALSE, portMAX_DELAY);
+
+        // Only publish discovery data when restarted (not when waking up)
+        if (wakeup_count == 1) {
+            mqtt_publish_discovery(client);
+        }
+
+        mqtt_publish_measurements(client, battery, soil);
+        ESP_ERROR_CHECK(esp_mqtt_client_stop(client));
+
+        last_published.battery = battery;
+        last_published.soil = soil;
     }
 
-    mqtt_publish_measurements(client);
-    ESP_ERROR_CHECK(esp_mqtt_client_stop(client));
- 
     ESP_LOGI(TAG, "================================ Going to sleep ================================");
     esp_deep_sleep(60 * 1000 * 1000);
 }
