@@ -144,42 +144,28 @@ void connect_to_wifi()
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_start));
 }
 
-static void mqtt_publish_discovery(esp_mqtt_client_handle_t client)
+static void mqtt_publish_discovery(esp_mqtt_client_handle_t client, const char* id, const char* name, const char* class, const char* unit)
 {
-    const char* battery_data =
-        "{\"dev_cla\": \"battery\","
-        "\"unit_of_meas\": \"%\","
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/sensor/plantsensor/%s/config", id);
+
+    char contents[512];
+    snprintf(contents, sizeof(contents),
+        "{\"dev_cla\": \"%s\","
+        "\"unit_of_meas\": \"%s\","
         "\"stat_cla\": \"measurement\","
-        "\"name\": \"Battery\","
-        "\"stat_t\": \"plantsensor/sensor/battery/state\","
-        "\"uniq_id\": \"ESPsensorbattery\","
+        "\"name\": \"%s\","
+        "\"stat_t\": \"plantsensor/sensor/%s/state\","
+        "\"uniq_id\": \"ESPsensor%s\","
         "\"dev\": {"
         "  \"ids\": \"1\","
         "  \"name\": \"plantsensor\","
         "  \"sw\": \"0.1\","
         "  \"model\": \"T-Higrow\","
-        "  \"mf\": \"LilyGO\"}}";
+        "  \"mf\": \"LilyGO\"}}", class, unit, name, id, id);
 
-    if (esp_mqtt_client_publish(client, "homeassistant/sensor/plantsensor/battery/config", battery_data, 0, 0, 0) == -1) {
-        ESP_LOGE(TAG, "Failed to publish MQTT battery discovery data");
-    }
-
-    const char* soil_data =
-        "{\"dev_cla\": \"moisture\","
-        "\"unit_of_meas\": \"%\","
-        "\"stat_cla\": \"measurement\","
-        "\"name\": \"Soil\","
-        "\"stat_t\": \"plantsensor/sensor/soil/state\","
-        "\"uniq_id\": \"ESPsensorsoil\","
-        "\"dev\": {"
-        "  \"ids\": \"1\","
-        "  \"name\": \"plantsensor\","
-        "  \"sw\": \"0.1\","
-        "  \"model\": \"T-Higrow\","
-        "  \"mf\": \"LilyGO\"}}";
-
-    if (esp_mqtt_client_publish(client, "homeassistant/sensor/plantsensor/soil/config", soil_data, 0, 0, 0) == -1) {
-        ESP_LOGE(TAG, "Failed to publish MQTT soil discovery data");
+    if (esp_mqtt_client_publish(client, topic, contents, 0, 0, 0) == -1) {
+        ESP_LOGE(TAG, "Failed to publish MQTT %s discovery data", id);
     }
 }
 
@@ -279,7 +265,8 @@ void app_main()
 
         // Only publish discovery data when restarted (not when waking up)
         if (wakeup_count == 1) {
-            mqtt_publish_discovery(client);
+            mqtt_publish_discovery(client, "battery", "Battery", "battery", "%");
+            mqtt_publish_discovery(client, "soil", "Soil", "moisture", "%");
         }
 
         mqtt_publish_measurements(client, battery, soil);
